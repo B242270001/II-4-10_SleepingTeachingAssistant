@@ -128,9 +128,10 @@ II-4-10_SleepingTeachingAssistant/
 │   ├── ui_scenarios.py        # UI сценари + screenshot (macOS)
 │   └── screenshots/
 ├── docs/
-│   ├── II-4-10_BD1_Report.pdf # Тайлан
-│   └── II-4-10_Manual.pdf     # Хэрэглэгчийн болон Operational гарын авлага
-├── testing_results.md / .pdf  # Туршилтын тайлан
+│   ├── II-4-10_Report.pdf     # Тайлан
+│   ├── II-4-10_Manual.pdf      # Хэрэглэгчийн болон Operational гарын авлага
+│   ├── testing_results.pdf     # Туршилтын тайлан
+│   └── testing_results.md  
 ├── .gitignore
 └── README.md
 ```
@@ -159,7 +160,7 @@ python3 tests/ui_scenarios.py all               # UI сценари + screenshot
 | Edge case тест | 27 / 27 тэнцсэн |
 | UI сценари (S1–S11) | 11 / 11 тэнцсэн |
 
-Дэлгэрэнгүйг [testing_results.pdf](testing_results.pdf)-ээс харна уу.
+Дэлгэрэнгүйг [docs/testing_results.pdf](docs/testing_results.pdf)-ээс харна уу.
 
 ## Мэдэгдэж буй хязгаарлалт
 
