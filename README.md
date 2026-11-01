@@ -117,16 +117,21 @@ Thread бүр өөрийн үйлдлийг `Event` болгон `queue.Queue`-�
 ## Төслийн бүтэц
 
 ```
+II-4-10_SleepingTeachingAssistant/
 ├── src/
-│   ├── ta_core.py        # Core: Simulation, Config, thread-үүд (UI-аас хамааралгүй)
-│   ├── ui.py             # Tkinter dashboard
-│   └── test_ta_core.py   # Багийн автомат тест (11)
+│   ├── ta_core.py             # Core: Simulation, Config, thread-үүд (UI-аас хамааралгүй)
+│   ├── ui.py                  # Tkinter dashboard
+│   └── test_ta_core.py        # Багийн автомат тест (11)
 ├── tests/
-│   ├── test_edge_cases.py   # Edge case тест (27)
-│   ├── core_scenarios.py    # Core дээрх сценарийн тоо
-│   ├── ui_scenarios.py      # UI сценари + screenshot
+│   ├── test_edge_cases.py     # Edge case тест (27)
+│   ├── core_scenarios.py      # Core дээрх сценарийн тоо
+│   ├── ui_scenarios.py        # UI сценари + screenshot (macOS)
 │   └── screenshots/
+├── docs/
+│   ├── II-4-10_BD1_Report.pdf # Тайлан
+│   └── II-4-10_Manual.pdf     # Хэрэглэгчийн болон Operational гарын авлага
 ├── testing_results.md / .pdf  # Туршилтын тайлан
+├── .gitignore
 └── README.md
 ```
 
