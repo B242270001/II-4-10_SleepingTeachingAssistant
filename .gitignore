@@ -1,4 +1,8 @@
 __pycache__/
 *.pyc
 .DS_Store
- 
+
+# Local Word docs (not committed)
+docs/II-4-10_Manual.docx
+docs/II-4-10_Report.docx
+docs/II-4-10_Issue_log.docx
