@@ -1,0 +1,115 @@
+{
+  "id": "S8",
+  "input": [
+    "3",
+    "5",
+    "1.0",
+    "1.5"
+  ],
+  "shots": [
+    {
+      "name": "S8",
+      "status": "●  STEP 11",
+      "served": 1,
+      "turned_away": 2,
+      "waiting": [
+        1,
+        0,
+        4
+      ],
+      "current": 3,
+      "ta_state": "HELPING",
+      "events": 11
+    }
+  ],
+  "probes": [
+    {
+      "status": "●  PAUSED",
+      "served": 0,
+      "turned_away": 0,
+      "waiting": [
+        3,
+        1,
+        0
+      ],
+      "current": 4,
+      "ta_state": "HELPING",
+      "events": 6
+    },
+    {
+      "status": "●  STEP 7",
+      "served": 0,
+      "turned_away": 1,
+      "waiting": [
+        3,
+        1,
+        0
+      ],
+      "current": 4,
+      "ta_state": "HELPING",
+      "events": 7
+    },
+    {
+      "status": "●  STEP 8",
+      "served": 1,
+      "turned_away": 1,
+      "waiting": [
+        3,
+        1,
+        0
+      ],
+      "current": null,
+      "ta_state": "AWAKE",
+      "events": 8
+    },
+    {
+      "status": "●  STEP 9",
+      "served": 1,
+      "turned_away": 1,
+      "waiting": [
+        1,
+        0
+      ],
+      "current": 3,
+      "ta_state": "HELPING",
+      "events": 9
+    },
+    {
+      "status": "●  WAITING FOR EVENT",
+      "served": 1,
+      "turned_away": 1,
+      "waiting": [
+        1,
+        0
+      ],
+      "current": 3,
+      "ta_state": "HELPING",
+      "events": 9
+    },
+    {
+      "status": "●  WAITING FOR EVENT",
+      "served": 1,
+      "turned_away": 1,
+      "waiting": [
+        1,
+        0,
+        4
+      ],
+      "current": 3,
+      "ta_state": "HELPING",
+      "events": 10
+    }
+  ],
+  "status": "●  STEP 11",
+  "served": 1,
+  "turned_away": 2,
+  "waiting": [
+    1,
+    0,
+    4
+  ],
+  "current": 3,
+  "ta_state": "HELPING",
+  "events": 11,
+  "errors": []
+}

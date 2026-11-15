@@ -1,0 +1,39 @@
+{
+  "id": "S9",
+  "input": [
+    "3",
+    "5",
+    "1.0",
+    "1.5"
+  ],
+  "shots": [
+    {
+      "name": "S9_before_reset",
+      "status": "●  READY",
+      "served": 0,
+      "turned_away": 0,
+      "waiting": [],
+      "current": null,
+      "ta_state": "SLEEPING",
+      "events": 0
+    },
+    {
+      "name": "S9",
+      "status": "●  READY",
+      "served": 0,
+      "turned_away": 0,
+      "waiting": [],
+      "current": null,
+      "ta_state": "SLEEPING",
+      "events": 0
+    }
+  ],
+  "status": "●  READY",
+  "served": 0,
+  "turned_away": 0,
+  "waiting": [],
+  "current": null,
+  "ta_state": "SLEEPING",
+  "events": 0,
+  "errors": []
+}
