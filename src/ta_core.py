@@ -6,8 +6,9 @@ ta_core.py - The Sleeping Teaching Assistant: CORE (UI-аас хамааралг
 Нөхцөл:
   * TA-ийн өрөөнд 1 сандал (TA), коридорт N хүлээлгийн сандал байна.
   * Оюутан байхгүй бол TA унтана.
-  * Оюутан ирэхэд: TA унтаж байвал сэрээнэ; сул сандал байвал суугаад хүлээнэ;
-    сандал дүүрэн бол буцаж явна (хэсэг хугацааны дараа дахин ирнэ).
+  * Оюутан ирэхэд: TA унтаж байвал сэрээгээд шууд TA-ийн өрөөнд орно (хүлээлгийн
+    сандал шаардлагагүй); TA завгүй бол сул сандалд суугаад хүлээнэ; сандал дүүрэн
+    бол буцаж явна (хэсэг хугацааны дараа дахин ирнэ).
 
 Synchronization (номын шийдэлтэй ижил):
   * mutex          - хүлээлгийн сандлын мэдээллийг (waiting, ta_state ...) хамгаална
@@ -25,6 +26,7 @@ from __future__ import annotations
 import argparse
 import queue
 import random
+import sys
 import threading
 import time
 from collections import deque
@@ -131,6 +133,7 @@ class Simulation:
         self.waiting: Deque[int] = deque()
         self.ta_state = TA_SLEEPING
         self.current: Optional[int] = None
+        self._direct: Optional[int] = None            # TA-г сэрээж шууд орсон оюутан
         self.served = 0
         self.turned_away = 0
         self._stop = threading.Event()
@@ -183,9 +186,10 @@ class Simulation:
 
     def reset(self, new_config: Optional[Config] = None) -> None:
         """Зогсоож, бүх төлөв + event queue-г цэвэрлэнэ. Шинэ тохиргоо өгч болно."""
+        if new_config is not None:
+            new_config.validate()      # буруу бол ажиллаж буй симуляцид хүрэхгүй (m-6)
         self.stop()
         if new_config is not None:
-            new_config.validate()
             self.config = new_config
         self.events = queue.Queue()
         self._threads = []
@@ -214,15 +218,23 @@ class Simulation:
             served=self.served, turned_away=self.turned_away))
 
     def _sleep(self, seconds: float) -> None:
-        """Pause болон stop-ыг хүндэтгэсэн sleep."""
-        remaining = seconds
-        while remaining > 0 and not self._stop.is_set():
+        """Pause болон stop-ыг хүндэтгэсэн sleep.
+
+        Бодит цагаар (monotonic deadline) тоолно. Өмнө нь 0.02 с алхам бүрийг
+        хасдаг байсан тул Windows-ийн ~15.6 мс timer дээр хугацаа ~1.5 дахин
+        уртасдаг байв (БД2, M-3). Pause-д зарцуулсан хугацааг deadline-д нэмнэ.
+        """
+        deadline = time.monotonic() + seconds
+        while not self._stop.is_set():
             if not self._run.is_set():          # pause: хугацаа хасахгүй хүлээнэ
+                paused_at = time.monotonic()
                 self._run.wait(0.05)
+                deadline += time.monotonic() - paused_at
                 continue
-            step = min(0.02, remaining)
-            self._stop.wait(step)
-            remaining -= step
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                return
+            self._stop.wait(min(0.02, remaining))
 
     @staticmethod
     def _around(rng: random.Random, mean: float) -> float:
@@ -235,7 +247,7 @@ class Simulation:
         while not self._stop.is_set():
             # 1) Хүлээж буй хүн байхгүй бол унтна
             with self.mutex:
-                if not self.waiting and self.ta_state != TA_SLEEPING:
+                if not self.waiting and self._direct is None and self.ta_state != TA_SLEEPING:
                     self.ta_state = TA_SLEEPING
                     self._emit(TA_SLEEP, None, "Хүлээж буй оюутан алга, TA унтлаа")
             # 2) students_sem.wait(): оюутан ирэх хүртэл блоклогдоно (= унтана)
@@ -244,9 +256,12 @@ class Simulation:
                 got = self.students_sem.acquire(timeout=0.05)
             if not got:
                 break
-            # 3) Дарааллын эхний оюутныг авна
+            # 3) TA-г сэрээсэн оюутан (шууд орсон) эсвэл дарааллын эхний оюутныг авна
             with self.mutex:
-                sid = self.waiting.popleft()
+                if self._direct is not None:
+                    sid, self._direct = self._direct, None
+                else:
+                    sid = self.waiting.popleft()
                 self.current = sid
                 self.ta_state = TA_HELPING
                 self._emit(TA_START, sid, f"TA оюутан {sid}-д үйлчилж эхлэв")
@@ -272,10 +287,17 @@ class Simulation:
                 break
             seated = False
             with self.mutex:
-                if len(self.waiting) < cfg.num_chairs:
-                    if self.ta_state == TA_SLEEPING:
-                        self.ta_state = TA_AWAKE
-                        self._emit(STUDENT_WAKES_TA, sid, f"Оюутан {sid} унтаж буй TA-г сэрээв")
+                if self.ta_state == TA_SLEEPING:
+                    # TA унтаж байна => дараалал хоосон. Оюутан TA-г сэрээж хүлээлгийн
+                    # сандал алгасан шууд TA-ийн өрөөнд орно (сандлын тоо 0 байсан ч).
+                    self.ta_state = TA_AWAKE
+                    self._direct = sid
+                    self.current = sid
+                    self._emit(STUDENT_WAKES_TA, sid,
+                               f"Оюутан {sid} унтаж буй TA-г сэрээж шууд өрөөнд орлоо")
+                    self.students_sem.release()          # signal(students)
+                    seated = True
+                elif len(self.waiting) < cfg.num_chairs:
                     self.waiting.append(sid)
                     self._emit(STUDENT_WAITS, sid, f"Оюутан {sid} сандалд суув")
                     self.students_sem.release()          # signal(students)
@@ -301,6 +323,9 @@ def _main() -> None:
     p.add_argument("--duration", type=float, default=10.0, help="хэдэн секунд ажиллуулах")
     p.add_argument("--seed", default="")
     a = p.parse_args()
+    # Windows-ийн cp1252 зэрэг консол/pipe дээр кирилл текст хэвлэхэд унахгүй (m-1)
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
     try:
         cfg = Config.from_text(a.chairs, a.students, a.interval, a.service, a.seed)
     except ValueError as e:

@@ -137,15 +137,16 @@ class TestLifecycleEdgeCases(unittest.TestCase):
         self.assertGreater(sim.served + sim.turned_away, 0)
 
     def test_invalid_reset_config_documented_behavior(self):
-        """Буруу тохиргоотой reset: ValueError шидэх ба симуляци зогссон хэвээр үлдэнэ."""
+        """Буруу тохиргоотой reset: ValueError шиднэ, ажиллаж буй симуляци үргэлжилнэ (БД2, m-6)."""
         sim = Simulation(Config(3, 3, 0.03, 0.03, seed=4))
         sim.start()
         time.sleep(0.2)
         with self.assertRaises(ValueError):
             sim.reset(Config(num_chairs=99))
-        self.assertFalse(sim.running)
-        self.assertEqual(sim.alive_threads(), 0)
+        self.assertTrue(sim.running)
+        self.assertEqual(sim.config.num_chairs, 3)
         sim.reset()                       # дараа нь хэвийн reset хийж болно
+        self.assertEqual(sim.alive_threads(), 0)
         sim.start()
         time.sleep(0.2)
         sim.stop()
@@ -174,7 +175,8 @@ class TestSimulationSemantics(unittest.TestCase):
     def test_fifo_order(self):
         """Сандалд эхэлж суусан оюутан эхэлж үйлчлүүлнэ."""
         sim, ev = run_sim(Config(5, 8, 0.03, 0.06, seed=7), 2.0)
-        seated = [e.student for e in ev if e.kind == STUDENT_WAITS]
+        # БД2 (M-1): унтаж буй TA-г сэрээсэн оюутан сандалгүйгээр шууд орно
+        seated = [e.student for e in ev if e.kind in (STUDENT_WAITS, STUDENT_WAKES_TA)]
         started = [e.student for e in ev if e.kind == TA_START]
         self.assertGreater(len(started), 3)
         self.assertEqual(started, seated[:len(started)], "FIFO дараалал зөрчигдсөн")
@@ -189,7 +191,7 @@ class TestSimulationSemantics(unittest.TestCase):
 
     def test_served_never_exceeds_seated(self):
         sim, ev = run_sim(Config(3, 6, 0.03, 0.05, seed=9), 1.5)
-        seated = sum(e.kind == STUDENT_WAITS for e in ev)
+        seated = sum(e.kind in (STUDENT_WAITS, STUDENT_WAKES_TA) for e in ev)
         self.assertLessEqual(sim.served, seated)
 
     def test_timestamps_never_go_backwards(self):
@@ -211,8 +213,7 @@ class TestSimulationSemantics(unittest.TestCase):
         kinds = [e.kind for e in ev]
         self.assertEqual(kinds[0], SIM_START)
         self.assertEqual(kinds[1], STUDENT_WAKES_TA)
-        self.assertEqual(kinds[2], STUDENT_WAITS)
-        self.assertEqual(kinds[3], TA_START)
+        self.assertEqual(kinds[2], TA_START)        # БД2 (M-1): сандалд суухгүй шууд орно
 
     def test_ta_goes_back_to_sleep_when_queue_empties(self):
         _, ev = run_sim(Config(3, 1, 0.4, 0.05, seed=13), 2.5)
@@ -240,10 +241,12 @@ class TestSimulationSemantics(unittest.TestCase):
             self.assertEqual(len(set(e.waiting)), len(e.waiting))
         self.assertEqual(ev[-1].kind, SIM_STOP)
 
-    def test_zero_chairs_ta_never_works(self):
+    def test_zero_chairs_ta_serves_when_sleeping(self):
+        # БД2 (M-1): өмнө нь "TA хэзээ ч ажиллахгүй" гэж баталгаажуулдаг байсан
         sim, ev = run_sim(Config(0, 5, 0.02, 0.05, seed=17), 1.0)
-        self.assertEqual(sim.ta_state, TA_SLEEPING)
-        self.assertFalse(any(e.kind in (TA_START, TA_DONE, STUDENT_WAKES_TA) for e in ev))
+        self.assertTrue(any(e.kind == STUDENT_WAKES_TA for e in ev))
+        self.assertTrue(any(e.kind == TA_DONE for e in ev))
+        self.assertTrue(all(e.waiting == () for e in ev))
 
 
 if __name__ == "__main__":

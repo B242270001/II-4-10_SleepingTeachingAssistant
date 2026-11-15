@@ -5,7 +5,7 @@ import time
 import unittest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
-from src.ta_core import (Config, Simulation, TA_SLEEPING, TA_START, TA_DONE,
+from ta_core import (Config, Simulation, TA_SLEEPING, TA_START, TA_DONE,
                      STUDENT_WAITS, STUDENT_LEAVES, STUDENT_WAKES_TA)
 
 
@@ -65,9 +65,12 @@ class TestCorrectness(unittest.TestCase):
         self.assertTrue(any(e.kind == STUDENT_LEAVES for e in ev))
 
     def test_zero_chairs(self):
+        # БД2 (M-1): сандалгүй ч унтаж буй TA-г сэрээсэн оюутан шууд үйлчлүүлнэ,
+        # TA завгүй үед ирсэн нь буцна.
         cfg = Config(0, 5, 0.02, 0.05, seed=3)
         sim, ev = run_sim(cfg, 1.0)
-        self.assertEqual(sim.served, 0)
+        self.check_invariants(cfg, ev)
+        self.assertGreater(sim.served, 0)
         self.assertGreater(sim.turned_away, 0)
         self.assertFalse(any(e.kind == STUDENT_WAITS for e in ev))
 
