@@ -1,0 +1,29 @@
+{
+  "id": "S4",
+  "input": [
+    "0",
+    "5",
+    "0.5",
+    "1.0"
+  ],
+  "shots": [
+    {
+      "name": "S4",
+      "status": "●  RUNNING",
+      "served": 10,
+      "turned_away": 97,
+      "waiting": [],
+      "current": 0,
+      "ta_state": "HELPING",
+      "events": 140
+    }
+  ],
+  "status": "●  RUNNING",
+  "served": 10,
+  "turned_away": 97,
+  "waiting": [],
+  "current": 0,
+  "ta_state": "HELPING",
+  "events": 140,
+  "errors": []
+}

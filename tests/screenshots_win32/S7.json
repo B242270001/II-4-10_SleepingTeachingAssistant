@@ -1,0 +1,74 @@
+{
+  "id": "S7",
+  "input": [
+    "3",
+    "5",
+    "1.0",
+    "1.5"
+  ],
+  "shots": [
+    {
+      "name": "S7_pause",
+      "status": "●  PAUSED",
+      "served": 3,
+      "turned_away": 4,
+      "waiting": [
+        0,
+        1
+      ],
+      "current": 4,
+      "ta_state": "HELPING",
+      "events": 18
+    },
+    {
+      "name": "S7",
+      "status": "●  RUNNING",
+      "served": 7,
+      "turned_away": 8,
+      "waiting": [
+        4,
+        0
+      ],
+      "current": 3,
+      "ta_state": "HELPING",
+      "events": 34
+    }
+  ],
+  "probes": [
+    {
+      "status": "●  PAUSED",
+      "served": 3,
+      "turned_away": 4,
+      "waiting": [
+        0,
+        1
+      ],
+      "current": 4,
+      "ta_state": "HELPING",
+      "events": 18
+    },
+    {
+      "status": "●  PAUSED",
+      "served": 3,
+      "turned_away": 4,
+      "waiting": [
+        0,
+        1
+      ],
+      "current": 4,
+      "ta_state": "HELPING",
+      "events": 18
+    }
+  ],
+  "status": "●  RUNNING",
+  "served": 7,
+  "turned_away": 8,
+  "waiting": [
+    4,
+    0
+  ],
+  "current": 3,
+  "ta_state": "HELPING",
+  "events": 34,
+  "errors": []
+}

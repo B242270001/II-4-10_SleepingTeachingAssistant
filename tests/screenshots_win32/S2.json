@@ -1,0 +1,33 @@
+{
+  "id": "S2",
+  "input": [
+    "1",
+    "10",
+    "0.3",
+    "1.5"
+  ],
+  "shots": [
+    {
+      "name": "S2",
+      "status": "●  RUNNING",
+      "served": 15,
+      "turned_away": 495,
+      "waiting": [
+        4
+      ],
+      "current": 1,
+      "ta_state": "HELPING",
+      "events": 544
+    }
+  ],
+  "status": "●  RUNNING",
+  "served": 15,
+  "turned_away": 495,
+  "waiting": [
+    4
+  ],
+  "current": 1,
+  "ta_state": "HELPING",
+  "events": 544,
+  "errors": []
+}

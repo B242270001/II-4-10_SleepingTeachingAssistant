@@ -1,6 +1,6 @@
 """UI сценариудыг автоматаар ажиллуулж, screenshot болон үр дүнг хадгална.
 
-Ажиллуулах (macOS, төслийн үндсэн хавтсанд):
+Ажиллуулах (macOS / Windows, төслийн үндсэн хавтсанд; Windows дээр Pillow хэрэгтэй):
     python3 tests/ui_scenarios.py S1      # нэг сценари
     python3 tests/ui_scenarios.py all     # бүгд (сценари бүр тусдаа процесс)
 
@@ -10,7 +10,7 @@
   1. src/ui.py-н Dashboard цонхыг нээнэ.
   2. Сценарийн оролтыг талбаруудад бичнэ.
   3. START / PAUSE / STEP / RESET товчийн үйлдлийг (Dashboard-ийн метод) хугацаатай дуудна.
-  4. Тогтоосон мөчид цонхны хэсгийг `screencapture`-ээр авч, дэлгэц дээр харагдаж буй
+  4. Тогтоосон мөчид цонхны хэсгийг (macOS: `screencapture`, бусад: Pillow) авч, дэлгэц дээр харагдаж буй
      тоолуурыг (үйлчлүүлсэн, буцсан, дараалал, TA-ийн төлөв) JSON-д бичнэ.
 Screenshot авахад macOS-ийн Screen Recording зөвшөөрөл шаардагдаж болно.
 """
@@ -18,10 +18,12 @@ import json
 import os
 import subprocess
 import sys
+import time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SRC = os.path.abspath(os.path.join(HERE, "..", "src"))
-OUT = os.path.join(HERE, "screenshots")
+# macOS-ийн BD1 нотолгоог дарж бичихгүйн тулд бусад OS-ийн үр дүнг тусад нь хадгална
+OUT = os.path.join(HERE, "screenshots" if sys.platform == "darwin" else f"screenshots_{sys.platform}")
 
 # ID: (сандал, оюутан, ирэх, үйлчилгээ, [(секунд, үйлдэл), ...], төгсгөлийн screenshot-ын секунд)
 # Үйлдэл: start | pause | step | reset | probe | shot:<нэр> | shot_sleep:<нэр>
@@ -44,7 +46,72 @@ SCENARIOS = {
 }
 
 
+def _printwindow(hwnd):
+    """Windows: цонхыг Win32 PrintWindow-оор зурна. Бусад цонх дээр нь давхарласан
+    ч зөв гарна. Дэлгэцээс хуулбал ажиллаж буй Tk canvas заримдаа хар гардаг тул ингэсэн."""
+    import ctypes
+    from ctypes import wintypes
+    from PIL import Image
+    u, g = ctypes.windll.user32, ctypes.windll.gdi32
+    rect = wintypes.RECT()
+    u.GetClientRect(hwnd, ctypes.byref(rect))
+    w, h = rect.right, rect.bottom
+    hdc = u.GetDC(hwnd)
+    mdc = g.CreateCompatibleDC(hdc)
+    bmp = g.CreateCompatibleBitmap(hdc, w, h)
+    g.SelectObject(mdc, bmp)
+    u.PrintWindow(hwnd, mdc, 1 | 2)              # PW_CLIENTONLY | PW_RENDERFULLCONTENT
+
+    class BITMAPINFOHEADER(ctypes.Structure):
+        _fields_ = [("biSize", wintypes.DWORD), ("biWidth", wintypes.LONG),
+                    ("biHeight", wintypes.LONG), ("biPlanes", wintypes.WORD),
+                    ("biBitCount", wintypes.WORD), ("biCompression", wintypes.DWORD),
+                    ("biSizeImage", wintypes.DWORD), ("biXPelsPerMeter", wintypes.LONG),
+                    ("biYPelsPerMeter", wintypes.LONG), ("biClrUsed", wintypes.DWORD),
+                    ("biClrImportant", wintypes.DWORD)]
+
+    bih = BITMAPINFOHEADER(ctypes.sizeof(BITMAPINFOHEADER), w, -h, 1, 32, 0, 0, 0, 0, 0, 0)
+    buf = ctypes.create_string_buffer(w * h * 4)
+    g.GetDIBits(mdc, bmp, 0, h, buf, ctypes.byref(bih), 0)
+    g.DeleteObject(bmp)
+    g.DeleteDC(mdc)
+    u.ReleaseDC(hwnd, hdc)
+    return Image.frombytes("RGB", (w, h), buf.raw, "raw", "BGRX")   # buf-ийг хуулна
+
+
+def grab(root, path):
+    """Цонхны screenshot (БД2, m-3).
+    macOS: screencapture; Windows: PrintWindow; Linux: Pillow ImageGrab (X11)."""
+    x, y = root.winfo_rootx(), root.winfo_rooty()
+    w, h = root.winfo_width(), root.winfo_height()
+    if sys.platform == "darwin":
+        subprocess.run(["screencapture", "-x", "-R", f"{x},{y},{w},{h}", path], check=False)
+        return
+    try:
+        from PIL import ImageGrab
+    except ImportError:
+        print("Pillow суугаагүй тул screenshot алгасав (pip install pillow)", file=sys.stderr)
+        return
+    if sys.platform == "win32":
+        import ctypes
+        hwnd = ctypes.windll.user32.GetAncestor(root.winfo_id(), 2)   # GA_ROOT
+        img = _printwindow(hwnd)
+        if img.width == 0 or img.height == 0:
+            print(f"{path}: цонхны хэмжээ 0, screenshot алгасав", file=sys.stderr)
+            return
+        img.save(path)
+    else:
+        ImageGrab.grab(bbox=(x, y, x + w, y + h)).save(path)
+
+
 def run_one(sid):
+    if sys.platform == "win32":
+        # Tk-ийн координатыг дэлгэцийн бодит пикселтэй тааруулна (125%/150% scaling)
+        import ctypes
+        try:
+            ctypes.windll.shcore.SetProcessDpiAwareness(1)
+        except (AttributeError, OSError):
+            pass
     import tkinter as tk
     sys.path.insert(0, SRC)
     import ui
@@ -76,10 +143,13 @@ def run_one(sid):
                 "events": app.event_number}
 
     def snap(name):
+        if root.state() == "iconic":        # бусад програм цонхыг minimize хийсэн бол сэргээнэ
+            root.deiconify()
+            for _ in range(10):
+                root.update()
+                time.sleep(0.03)
         root.update()
-        x, y, w, h = root.winfo_rootx(), root.winfo_rooty(), root.winfo_width(), root.winfo_height()
-        path = os.path.join(OUT, name + ".png")
-        subprocess.run(["screencapture", "-x", "-R", f"{x},{y},{w},{h}", path], check=False)
+        grab(root, os.path.join(OUT, name + ".png"))
         result["shots"].append({"name": name, **state()})
 
     def wait_sleep(name, deadline):
@@ -117,6 +187,8 @@ def run_one(sid):
 
 
 if __name__ == "__main__":
+    if hasattr(sys.stdout, "reconfigure"):          # Windows cp1252 дээр '●' хэвлэхэд унахгүй
+        sys.stdout.reconfigure(encoding="utf-8")
     which = sys.argv[1] if len(sys.argv) > 1 else "all"
     if which == "all":
         for sid in SCENARIOS:

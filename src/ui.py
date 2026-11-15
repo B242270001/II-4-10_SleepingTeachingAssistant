@@ -69,6 +69,7 @@ class Dashboard:
 
     POLL_MS = 70
     FRAME_MS = 33
+    MAX_BACKLOG = 20      # buffered events before fast-forward (BD2, m-4)
     MAX_LOG_ROWS = 1200
     ROOM_LEFT = 292
     CHAIR_W = 91
@@ -509,6 +510,7 @@ class Dashboard:
             ('students', 'Students (1–50)', '10'),
             ('interval', 'Arrival interval (sec)', '1.0'),
             ('service', 'Service time (sec)', '1.5'),
+            ('seed', 'Seed (optional)', ''),
         ]):
             self._txt(
                 form,
@@ -842,6 +844,7 @@ class Dashboard:
                 self.form['students'].get(),
                 self.form['interval'].get(),
                 self.form['service'].get(),
+                self.form['seed'].get(),
             )
         except (ValueError, TypeError) as exc:
             self._status('INVALID INPUT', C.red)
@@ -1038,6 +1041,13 @@ class Dashboard:
         self.last_frame = now
 
         if self.running:
+            # Core is far ahead: jump to recent snapshots so the
+            # counters stay close to the real thread state (BD2, m-4).
+            if len(self.events) > self.MAX_BACKLOG:
+                self._fast_forward(
+                    len(self.events) - self.MAX_BACKLOG
+                )
+
             self.event_accum += (
                 dt * self.speed.get()
             )
@@ -1069,6 +1079,39 @@ class Dashboard:
             self.FRAME_MS,
             self._frame
         )
+
+    def _fast_forward(self, count):
+        """Apply `count` buffered events without animating each one.
+
+        Every event carries a full snapshot, so the newest skipped event
+        gives the correct state; history, chart samples and the log
+        still receive all of them.
+        """
+        event = None
+        for _ in range(min(count, len(self.events))):
+            event = self.events.popleft()
+            self.event_number += 1
+            self.history.append(event)
+            self.samples.append((
+                event.t,
+                event.served,
+                len(event.waiting),
+                event.turned_away
+            ))
+
+        if event is None:
+            return
+
+        self.last_event = event
+        self.display_state = event.ta_state
+        self.display_waiting = list(event.waiting)
+        self.display_current = event.current
+        self.display_served = event.served
+        self.display_away = event.turned_away
+        self._sync_actors(event)
+        self._update_metrics()
+        self._draw_chart()
+        self._refresh_log()
 
     def _consume_one(self):
         if not self.events:

@@ -1,0 +1,71 @@
+{
+  "id": "S6",
+  "input": [
+    "20",
+    "50",
+    "0.2",
+    "0.5"
+  ],
+  "shots": [
+    {
+      "name": "S6",
+      "status": "●  RUNNING",
+      "served": 40,
+      "turned_away": 2832,
+      "waiting": [
+        31,
+        10,
+        29,
+        22,
+        5,
+        16,
+        17,
+        1,
+        39,
+        9,
+        7,
+        11,
+        42,
+        45,
+        48,
+        3,
+        41,
+        33,
+        13,
+        28
+      ],
+      "current": 32,
+      "ta_state": "HELPING",
+      "events": 2975
+    }
+  ],
+  "status": "●  RUNNING",
+  "served": 40,
+  "turned_away": 2832,
+  "waiting": [
+    31,
+    10,
+    29,
+    22,
+    5,
+    16,
+    17,
+    1,
+    39,
+    9,
+    7,
+    11,
+    42,
+    45,
+    48,
+    3,
+    41,
+    33,
+    13,
+    28
+  ],
+  "current": 32,
+  "ta_state": "HELPING",
+  "events": 2975,
+  "errors": []
+}
