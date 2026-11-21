@@ -1,8 +1,17 @@
 # II-4-10: The Sleeping Teaching Assistant
 
-**F.CSM302 Үйлдлийн систем — Бие даалт 1**
+**F.CSM302 Үйлдлийн систем — Бие даалт 2 (Final, `v2.0-final`)**
 
 Silberschatz, *Operating System Concepts* (10th Edition), Chapter 7, Programming Project 10 дээр суурилсан Sleeping Teaching Assistant симуляци. Олон thread-ийн synchronization-ийг Python-ийн `threading` санаар хэрэгжүүлж, Tkinter dashboard дээр бодит цагт дүрсэлнэ.
+
+![Dashboard: 20 сандал, 50 оюутан (S6, Windows 11)](tests/screenshots_win32/S6.png)
+
+| Материал | Тайлбар |
+|---|---|
+| [Poster](docs/II-4-10_Poster.pdf) | Нэг нүүртэй танилцуулга |
+| [Final Report](docs/II-4-10_Final_Report.pdf) | БД2: сайжруулалт, Reviewer Responses, дахин туршилт |
+| [Manual](docs/II-4-10_Manual.pdf) | Хэрэглэгчийн болон Operational гарын авлага |
+| [Issue Log](docs/II-4-10_Issue_Log.pdf) | Асуудал бүрийн ангилал, шийдвэр, нотолгоо |
 
 ---
 
@@ -24,7 +33,8 @@ Silberschatz, *Operating System Concepts* (10th Edition), Chapter 7, Programming
 |---|---|
 | Хуваарилалтын код | II-4-10 |
 | Сэдэв | The Sleeping Teaching Assistant |
-| GitHub | https://github.com/B242270001/II-4-10_SleepingTeachingAssistant |
+| GitHub | https://github.com/B242270001/F.CSM302_-_-_Assignment |
+| Final release | [`v2.0-final`](https://github.com/B242270001/F.CSM302_-_-_Assignment/releases/tag/v2.0-final) |
 
 ### Гишүүд
 
@@ -48,9 +58,12 @@ Silberschatz, *Operating System Concepts* (10th Edition), Chapter 7, Programming
 ### 1. Татаж авах
 
 ```bash
-git clone https://github.com/B242270001/II-4-10_SleepingTeachingAssistant.git
-cd II-4-10_SleepingTeachingAssistant
+git clone https://github.com/B242270001/F.CSM302_-_-_Assignment.git
+cd F.CSM302_-_-_Assignment
+git checkout v2.0-final      # эцсийн хувилбар (заавал биш)
 ```
+
+> Хуучин `II-4-10_SleepingTeachingAssistant.git` холбоос мөн ажиллана (GitHub дахин чиглүүлнэ), гэхдээ хавтасны нэр нь `II-4-10_SleepingTeachingAssistant` болно.
 
 ### 2. UI-тай ажиллуулах
 
@@ -58,7 +71,9 @@ cd II-4-10_SleepingTeachingAssistant
 python3 src/ui.py
 ```
 
-Талбаруудад утгаа оруулаад **START** дарна.
+Талбаруудад утгаа оруулаад **START** дарна. Жишээ: сандал 0, оюутан 5, ирэх 0.5, үйлчилгээ 1.0 гэвэл TA унтаж байхад ирсэн оюутан шууд үйлчлүүлж, бусад нь буцна.
+
+![S4: 0 сандалтай үед TA үйлчилж байна](tests/screenshots_win32/S4.png)
 
 > **Windows:** `python3`-ийн оронд `python` (эсвэл `py`) гэж бичнэ. Жишээ нь `python src/ui.py`.
 > Хэрэв `ui.py` дээр `ta_core` import алдаа гарвал `cd src` хийгээд `python ui.py` гэж ажиллуулна.
@@ -110,6 +125,7 @@ python3 src/ta_core.py --chairs 3 --students 5 --interval 1.0 --service 1.5 --du
 | `mutex` | `Lock` | Хүлээлгийн дараалал, TA-ийн төлөв, тоолуурыг хамгаална |
 | `students_sem` | `Semaphore(0)` | Хүлээж буй оюутны тоо. TA үүн дээр `wait` хийж унтана |
 | `turn[i]` | `Semaphore(0)` | Оюутан бүрийн хувийн semaphore. TA үйлчилж дуустал оюутан хүлээнэ |
+| `_direct` | `Optional[int]` | TA унтаж байхад түүнийг сэрээсэн оюутан (хүлээлгийн сандал алгасна, БД2) |
 
 Thread бүр өөрийн үйлдлийг `Event` болгон `queue.Queue`-д хийнэ, UI нь `root.after(...)`-ээр уншиж зурна.
 
@@ -118,7 +134,7 @@ Thread бүр өөрийн үйлдлийг `Event` болгон `queue.Queue`-�
 ## Төслийн бүтэц
 
 ```
-II-4-10_SleepingTeachingAssistant/
+F.CSM302_-_-_Assignment/
 ├── src/
 │   ├── ta_core.py             # Core: Simulation, Config, thread-үүд (UI-аас хамааралгүй)
 │   └── ui.py                  # Tkinter dashboard
@@ -131,7 +147,9 @@ II-4-10_SleepingTeachingAssistant/
 │   ├── screenshots/           # macOS (БД1)
 │   └── screenshots_win32/     # Windows 11 (БД2)
 ├── docs/
-│   ├── II-4-10_Report.pdf     # Тайлан
+│   ├── II-4-10_Poster.pdf     # БД2: постер
+│   ├── II-4-10_Final_Report.pdf # БД2: эцсийн тайлан
+│   ├── II-4-10_Report.pdf     # БД1 тайлан
 │   ├── II-4-10_Manual.pdf      # Хэрэглэгчийн болон Operational гарын авлага
 │   ├── testing_results.pdf     # Туршилтын тайлан
 │   ├── testing_results.md
